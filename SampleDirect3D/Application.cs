@@ -88,10 +88,11 @@ public unsafe class Application(string windowClassName, uint windowWidth, uint w
 
 			var current = Stopwatch.GetTimestamp();
 			float deltaTime = (current - timestamp)	/ (float)Stopwatch.Frequency;
-			
-			graphicsDevice.Render(this, deltaTime);
-
 			timestamp = current;
+
+			lib.Keyboard.UpdateKeyStates();
+
+			graphicsDevice.Render(this, deltaTime);
 		} while (running);
 	}
 

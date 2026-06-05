@@ -16,6 +16,8 @@ using AlphaMode = Vortice.Win32.Graphics.Direct2D.Common.AlphaMode;
 using Vortice.Win32.Numerics;
 using Vortice.Win32.Graphics.Direct2D;
 using System.Numerics;
+using Windows.Win32;
+using SampleDirect3D.lib;
 
 namespace SampleDirect3D;
 
@@ -141,6 +143,12 @@ public unsafe class D3DGrahicsDevice : IGraphicsDevice
 		if (tempDevice.CopyTo(ref d3dDevice).Failure) return HResult.Fail;
 		if (tempImmediateContext.CopyTo(ref immediateContext).Failure) return HResult.Fail;
 
+		using ComPtr<IDXGIDevice1> dxgiDevice1 = default;
+		if (d3dDevice.CopyTo(dxgiDevice1.GetAddressOf()).Success)
+		{
+			dxgiDevice1.Get()->SetMaximumFrameLatency(1);
+		}
+
 		return HResult.Ok;
 	}
 
@@ -224,7 +232,12 @@ public unsafe class D3DGrahicsDevice : IGraphicsDevice
 		if (tempD2DTargetBitmap.CopyTo(ref d2dTargetBitmap).Failure) return HResult.Fail;
 
 		d2dDeviceContext.Get()->SetTarget((ID2D1Image*)d2dTargetBitmap.Get());
-		d2dDeviceContext.Get()->CreateSolidColorBrush(new Color4(1.0f, 1.0f, 1.0f), d2dSolidColorBrush.GetAddressOf());
+
+		using ComPtr<ID2D1SolidColorBrush> tempD2DSolidColorBrush = default;	
+		ThrowIfFailed(d2dDeviceContext.Get()->CreateSolidColorBrush(
+			new Color4(1.0f, 1.0f, 1.0f), tempD2DSolidColorBrush.GetAddressOf()));
+
+		if (tempD2DSolidColorBrush.CopyTo(ref d2dSolidColorBrush).Failure) return HResult.Fail;
 
 		return HResult.Ok;
 	}
@@ -257,9 +270,13 @@ public unsafe class D3DGrahicsDevice : IGraphicsDevice
 		var color = new Color4(0.0f, 0.25f, 0.25f);
 		d2dDeviceContext.Get()->Clear(&color);
 		var rect = new RectF(100, 100, 200, 300);
-		d2dDeviceContext.Get()->DrawRectangle(&rect, (ID2D1Brush*)d2dSolidColorBrush.Get(), 1.0f, null);
-	
-		d2dDeviceContext.Get()->EndDraw();
+
+		if (Keyboard.current[KeyCode.W].IsPressed)
+		{
+			d2dDeviceContext.Get()->DrawRectangle(&rect, (ID2D1Brush*)d2dSolidColorBrush.Get(), 1.0f, null);
+		}
+
+		ThrowIfFailed(d2dDeviceContext.Get()->EndDraw());
 
 		swapChain.Get()->Present(1, 0);
 	}
@@ -274,7 +291,8 @@ public unsafe class D3DGrahicsDevice : IGraphicsDevice
 		backBuffer.Dispose();
 		renderTargetView.Dispose();
 		d2dDevice.Dispose();
-		d2dDeviceContext.Dispose();
+		d2dDeviceContext.Dispose();	
+		d2dTargetBitmap.Dispose();
 		d2dSolidColorBrush.Dispose();
 	}
 }

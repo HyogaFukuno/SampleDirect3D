@@ -16,3 +16,4 @@ LoadCursor
 IDC_ARROW
 GetDesktopWindow
 GetWindowRect
+GetKeyState
