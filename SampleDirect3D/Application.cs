@@ -13,9 +13,9 @@ public interface IApplication
 	uint WindowHeight { get; }
 }
 
-public unsafe class Application(string windowClassName, uint windowWidth, uint windowHeight, IGraphicsDevice renderer) : IApplication, IDisposable
+public unsafe class Application(string windowClassName, uint windowWidth, uint windowHeight, IGraphicsDevice graphicsDevice) : IApplication, IDisposable
 {
-	readonly IGraphicsDevice renderer = renderer;
+	readonly IGraphicsDevice graphicsDevice = graphicsDevice;
 	HWND? hwnd;
 	bool running;
 
@@ -57,7 +57,7 @@ public unsafe class Application(string windowClassName, uint windowWidth, uint w
 			null);
 		}
 
-		renderer.Initialize(this, hwnd.Value);
+		graphicsDevice.Initialize(this, hwnd.Value);
 	}
 
 	public void Run()
@@ -89,7 +89,7 @@ public unsafe class Application(string windowClassName, uint windowWidth, uint w
 			var current = Stopwatch.GetTimestamp();
 			float deltaTime = (current - timestamp)	/ (float)Stopwatch.Frequency;
 			
-			renderer.Render(this, deltaTime);
+			graphicsDevice.Render(this, deltaTime);
 
 			timestamp = current;
 		} while (running);
@@ -111,7 +111,7 @@ public unsafe class Application(string windowClassName, uint windowWidth, uint w
 
 	public void Dispose()
 	{
-		renderer.Dispose();
+		graphicsDevice.Dispose();
 	}
 
 	static RECT GetDesktopRect()
